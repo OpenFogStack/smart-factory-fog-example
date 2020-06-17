@@ -2,7 +2,7 @@
 
 This repository contains several services that form a smart factory example application that can be deployed to the fog.
 
-Please note that the related research is still pending publications.
+Please note that the related research is still pending publication.
 
 A full list of our [publications](https://www.mcc.tu-berlin.de/menue/forschung/publikationen/parameter/en/) and [prototypes](https://www.mcc.tu-berlin.de/menue/forschung/prototypes/parameter/en/) is available on our group website.
 

@@ -1,6 +1,10 @@
+[![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/OpenFogStack/smart-factory-fog-example)
+
 # Smart Factory Fog Example
 
-This repository contains several services that form a smart factory example application that can be deployed to the fog.
+This repository contains several services that form the smart factory example application shown in the figure:
+
+![](./application.png)
 
 Please note that the related research is still pending publication.
 

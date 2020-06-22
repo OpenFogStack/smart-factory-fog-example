@@ -19,6 +19,7 @@ import (
 )
 
 var dashboardEndpoint string = fmt.Sprintf("http://%s:%s/input", os.Getenv("CENTRALDASHBOARD_IP"), os.Getenv("CENTRALDASHBOARD_PORT"))
+var nodeManagerEndpoint string = fmt.Sprintf("%s?event_name=dashboard-generated", os.Getenv("NODEMANAGER_EVENT_ENDPOINT"))
 
 // amount of historic data to save
 const historic int = 5000
@@ -144,7 +145,27 @@ func update(d PackCtrlData) {
 
 	if err != nil {
 		log.Print(err)
-		return
+	}
+
+	// send message to node manager endpoint if available
+	if os.Getenv("NODEMANAGER_EVENT_ENDPOINT") != "" {
+		req, err := http.NewRequest("GET", nodeManagerEndpoint, bytes.NewReader(text))
+
+		if err != nil {
+			log.Print(err)
+			return
+		}
+
+		log.Printf("Notifying %s about newly generated dashboard", os.Getenv("NODEMANAGER_EVENT_ENDPOINT"))
+
+			_, err = (&http.Client{
+			Timeout: 5 * time.Second,
+		}).Do(req)
+
+		if err != nil {
+			log.Print(err)
+			return
+		}
 	}
 
 }
@@ -180,6 +201,12 @@ func main() {
 
 		go update(d)
 
+	})
+
+	http.HandleFunc("/state/notifications", func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("Received state notification request")
+		w.Header().Set("Server", "Generate Dashboard")
+  		w.WriteHeader(200)
 	})
 
 	log.Fatal(http.ListenAndServe(":"+os.Getenv("GENERATEDASHBOARD_PORT"), nil))

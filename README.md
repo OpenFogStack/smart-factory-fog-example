@@ -14,4 +14,6 @@ The code in this repository is licensed under the terms of the [MIT](./LICENSE) 
 
 Use the `Makefile` to build and push services as Docker containers.
 Adapt the `REPO` variable to your Docker repo.
-Then use `make all` or `make [service name]` to build and push all services or a specific service.
+Then use `make all -B` or `make [service name] -B` to build and push all services or a specific service.
+
+Alternatively, you can also build binaries directly by going into the directory of a service and running `go build .` (Go in version >= 1.13 is required).

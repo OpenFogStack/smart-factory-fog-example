@@ -1,4 +1,4 @@
-.PHONY: all
+.PHONY: all adapt aggregate camera cfd centraldashboard generatedashboard pkgcntrl predict cntrl prognosis sensor
 
 REPO=pfandzelter
 

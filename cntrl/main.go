@@ -31,42 +31,44 @@ func update(queue <-chan struct{}) {
 		case <-queue:
 			discarded++
 		case <-ticker.C:
-			// send rate - discarded
+			go func() {
+				// send rate - discarded
 
-			curr := (rate * (interval / 1000)) - discarded
+				curr := (rate * (interval / 1000)) - discarded
 
-			id, err := uuid.NewRandom()
-			if err != nil {
-				log.Print(err)
-				continue
-			}
+				id, err := uuid.NewRandom()
+				if err != nil {
+					log.Print(err)
+					return
+				}
 
-			type ProdCntrlData struct {
-				ProdRate  int    `json:"prod_rate"`
-				UUID      string `json:"uuid"`
-				Timestamp string `json:"timestamp"`
-			}
+				type ProdCntrlData struct {
+					ProdRate int    `json:"prod_rate"`
+					UUID     string `json:"uuid"`
+				}
 
-			data, err := json.Marshal(ProdCntrlData{
-				ProdRate:  curr,
-				UUID:      id.String(),
-				Timestamp: strconv.FormatInt(time.Now().UnixNano(), 10),
-			})
+				data, err := json.Marshal(ProdCntrlData{
+					ProdRate: curr,
+					UUID:     id.String(),
+				})
 
-			if err != nil {
-				return
-			}
-			log.Printf("send,prodctrl,%s,%s", id.String(), strconv.FormatInt(time.Now().UnixNano(), 10))
+				if err != nil {
+					return
+				}
+				log.Printf("send,prodctrl,%s,%s", id.String(), strconv.FormatInt(time.Now().UnixNano(), 10))
 
-			req, err := http.NewRequest("POST", adaptEndpoint, bytes.NewReader(data))
+				req, err := http.NewRequest("POST", adaptEndpoint, bytes.NewReader(data))
 
-			if err == nil {
-				_, err := (&http.Client{}).Do(req)
+				if err != nil {
+					return
+				}
+
+				_, err = (&http.Client{}).Do(req)
 
 				if err != nil {
 					log.Print(err)
 				}
-			}
+			}()
 		}
 	}
 }
@@ -75,8 +77,7 @@ func main() {
 	discardqueue := make(chan struct{})
 
 	type Request struct {
-		UUID      string `json:"uuid"`
-		Timestamp string `json:"timestamp"`
+		UUID string `json:"uuid"`
 	}
 
 	http.HandleFunc("/discard", func(w http.ResponseWriter, r *http.Request) {
@@ -89,7 +90,7 @@ func main() {
 			return
 		}
 
-		log.Printf("recv,discard,%s,%s,%s", data.UUID, data.Timestamp, timestamp)
+		log.Printf("recv,discard,%s,%s", data.UUID, timestamp)
 
 		discardqueue <- struct{}{}
 	})

@@ -12,8 +12,8 @@ FROM scratch
 
 WORKDIR /
 
-COPY --from=build /go/bin/centraldashboard bin
+COPY --from=build /go/bin/centraldashboard centraldashboard
 
 EXPOSE 8080
 
-ENTRYPOINT ["./bin"]
+ENTRYPOINT ["./centraldashboard"]

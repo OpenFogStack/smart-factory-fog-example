@@ -14,8 +14,8 @@ FROM scratch
 
 WORKDIR /
 
-COPY --from=build /go/bin/predict bin
+COPY --from=build /go/bin/predict predict
 
 EXPOSE 8080
 
-ENTRYPOINT ["./bin"]
+ENTRYPOINT ["./predict"]

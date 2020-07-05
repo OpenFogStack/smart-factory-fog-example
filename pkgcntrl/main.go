@@ -26,10 +26,9 @@ var backlog int = 0
 func main() {
 
 	type PackCtrlData struct {
-		Rate      int    `json:"rate"`
-		Backlog   int    `json:"backlog"`
-		UUID      string `json:"uuid"`
-		Timestamp string `json:"timestamp"`
+		Rate    int    `json:"rate"`
+		Backlog int    `json:"backlog"`
+		UUID    string `json:"uuid"`
 	}
 
 	http.HandleFunc("/rate", func(w http.ResponseWriter, r *http.Request) {
@@ -42,7 +41,7 @@ func main() {
 			return
 		}
 
-		log.Printf("recv,rate,%s,%s,%s", data.UUID, data.Timestamp, timestamp)
+		log.Printf("recv,rate,%s,%s", data.UUID, timestamp)
 
 		rate = data.Rate
 		backlog = data.Backlog
@@ -52,48 +51,75 @@ func main() {
 
 	ticker := time.NewTicker(time.Duration(interval) * time.Millisecond)
 
-	for {
-		<-ticker.C
+	for range ticker.C {
+		// both requests need to be performed in parallel, hence we use goroutines for both
+		go func() {
+			id, err := uuid.NewRandom()
+			if err != nil {
+				log.Print(err)
+				return
+			}
 
-		id, err := uuid.NewRandom()
-		if err != nil {
-			log.Print(err)
-			continue
-		}
+			// send rate and backlog
+			data, err := json.Marshal(PackCtrlData{
+				Rate:    rate,
+				Backlog: backlog,
+				UUID:    id.String(),
+			})
 
-		// send rate and backlog
-		data, err := json.Marshal(PackCtrlData{
-			Rate:      rate,
-			Backlog:   backlog,
-			UUID:      id.String(),
-			Timestamp: strconv.FormatInt(time.Now().UnixNano(), 10),
-		})
+			if err != nil {
+				log.Print(err)
+				return
+			}
 
-		if err != nil {
-			log.Print(err)
-			continue
-		}
+			log.Printf("send,packctrl,%s,%s", id.String(), strconv.FormatInt(time.Now().UnixNano(), 10))
 
-		log.Printf("send,packctrl,%s,%s", id.String(), strconv.FormatInt(time.Now().UnixNano(), 10))
-		req, err := http.NewRequest("POST", predictEndpoint, bytes.NewReader(data))
+			req, err := http.NewRequest("POST", predictEndpoint, bytes.NewReader(data))
 
-		if err == nil {
-			_, err := (&http.Client{}).Do(req)
+			if err != nil {
+				return
+			}
+			_, err = (&http.Client{}).Do(req)
 
 			if err != nil {
 				log.Print(err)
 			}
-		}
 
-		req, err = http.NewRequest("POST", aggregateEndpoint, bytes.NewReader(data))
+			// both requests need to be performed in parallel, hence we use goroutines for both
+		}()
+		go func() {
 
-		if err == nil {
-			_, err := (&http.Client{}).Do(req)
+			id, err := uuid.NewRandom()
+			if err != nil {
+				log.Print(err)
+				return
+			}
+
+			// send rate and backlog
+			data, err := json.Marshal(PackCtrlData{
+				Rate:    rate,
+				Backlog: backlog,
+				UUID:    id.String(),
+			})
+
+			if err != nil {
+				log.Print(err)
+				return
+			}
+
+			log.Printf("send,packcntrl,%s,%s", id.String(), strconv.FormatInt(time.Now().UnixNano(), 10))
+
+			req, err := http.NewRequest("POST", aggregateEndpoint, bytes.NewReader(data))
+
+			if err != nil {
+				return
+			}
+			_, err = (&http.Client{}).Do(req)
 
 			if err != nil {
 				log.Print(err)
 			}
-		}
 
+		}()
 	}
 }

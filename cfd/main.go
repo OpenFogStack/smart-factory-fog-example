@@ -17,9 +17,8 @@ import (
 var prodcntrlEndpoint string = fmt.Sprintf("http://%s:%s/discard", os.Getenv("CNTRL_IP"), os.Getenv("CNTRL_PORT"))
 
 type Request struct {
-	Img       string `json:"img"`
-	UUID      string `json:"uuid"`
-	Timestamp string `json:"timestamp"`
+	Img  string `json:"img"`
+	UUID string `json:"uuid"`
 }
 
 func isBlack(p color.RGBA) bool {
@@ -79,26 +78,26 @@ func processImage(d Request) {
 		// there is a defect, send instruction to prod_cntrl
 
 		type Request struct {
-			UUID      string `json:"uuid"`
-			Timestamp string `json:"timestamp"`
+			UUID string `json:"uuid"`
 		}
-
-		log.Printf("send,cfd,%s,%s", d.UUID, strconv.FormatInt(time.Now().UnixNano(), 10))
 
 		// send data
 		data, err := json.Marshal(Request{
-			UUID:      d.UUID,
-			Timestamp: strconv.FormatInt(time.Now().UnixNano(), 10),
+			UUID: d.UUID,
 		})
 
 		req, err := http.NewRequest("POST", prodcntrlEndpoint, bytes.NewReader(data))
 
-		if err == nil {
-			_, err := (&http.Client{}).Do(req)
+		if err != nil {
+			return
+		}
 
-			if err != nil {
-				log.Print(err)
-			}
+		log.Printf("send,cfd,%s,%s", d.UUID, strconv.FormatInt(time.Now().UnixNano(), 10))
+
+		_, err = (&http.Client{}).Do(req)
+
+		if err != nil {
+			log.Print(err)
 		}
 
 	}
@@ -117,7 +116,7 @@ func main() {
 			return
 		}
 
-		log.Printf("recv,image,%s,%s,%s", data.UUID, data.Timestamp, timestamp)
+		log.Printf("recv,image,%s,%s", data.UUID, timestamp)
 
 		go processImage(data)
 	})

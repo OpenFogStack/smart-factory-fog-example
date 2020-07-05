@@ -12,6 +12,6 @@ FROM scratch
 
 WORKDIR /
 
-COPY --from=build /go/bin/camera bin
+COPY --from=build /go/bin/camera camera
 
-ENTRYPOINT ["./bin"]
+ENTRYPOINT ["./camera"]

@@ -12,8 +12,8 @@ FROM scratch
 
 WORKDIR /
 
-COPY --from=build /go/bin/aggregate bin
+COPY --from=build /go/bin/aggregate aggregate
 
 EXPOSE 8080
 
-ENTRYPOINT ["./bin"]
+ENTRYPOINT ["./aggregate"]

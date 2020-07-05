@@ -12,8 +12,8 @@ FROM scratch
 
 WORKDIR /
 
-COPY --from=build /go/bin/cntrl bin
+COPY --from=build /go/bin/cntrl cntrl
 
 EXPOSE 8080
 
-ENTRYPOINT ["./bin"]
+ENTRYPOINT ["./cntrl"]

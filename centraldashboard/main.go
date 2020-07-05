@@ -38,17 +38,15 @@ func main() {
 		}
 
 		type Response struct {
-			Backlog   string `json:"backlog"`
-			Rate      string `json:"backlog"`
-			UUID      string `json:"uuid"`
-			Timestamp string `json:"timestamp"`
+			Backlog string `json:"backlog"`
+			Rate    string `json:"backlog"`
+			UUID    string `json:"uuid"`
 		}
 
 		res := Response{
-			Rate:      store.rate,
-			Backlog:   store.backlog,
-			UUID:      id.String(),
-			Timestamp: strconv.FormatInt(time.Now().UnixNano(), 10),
+			Rate:    store.rate,
+			Backlog: store.backlog,
+			UUID:    id.String(),
 		}
 
 		err = json.NewEncoder(w).Encode(res)
@@ -62,10 +60,9 @@ func main() {
 		timestamp := strconv.FormatInt(time.Now().UnixNano(), 10)
 
 		type Request struct {
-			Backlog   string `json:"backlog"`
-			Rate      string `json:"backlog"`
-			UUID      string `json:"uuid"`
-			Timestamp string `json:"timestamp"`
+			Backlog string `json:"backlog"`
+			Rate    string `json:"backlog"`
+			UUID    string `json:"uuid"`
 		}
 
 		var d Request
@@ -77,7 +74,7 @@ func main() {
 			return
 		}
 
-		log.Printf("recv,input,%s,%s,%s", d.UUID, d.Timestamp, timestamp)
+		log.Printf("recv,input,%s,%s", d.UUID, timestamp)
 
 		go update(d.Rate, d.Backlog)
 	})

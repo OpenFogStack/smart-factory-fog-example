@@ -20,10 +20,9 @@ var prognosisEndpoint string = fmt.Sprintf("http://%s:%s/input", os.Getenv("PROG
 const historic int = 1000
 
 type PackCtrlData struct {
-	Rate      int    `json:"rate"`
-	Backlog   int    `json:"backlog"`
-	UUID      string `json:"uuid"`
-	Timestamp string `json:"timestamp"`
+	Rate    int    `json:"rate"`
+	Backlog int    `json:"backlog"`
+	UUID    string `json:"uuid"`
 }
 
 type Store struct {
@@ -47,34 +46,46 @@ func update(d PackCtrlData) {
 	copy(s.Data, data)
 	s.Unlock()
 
+	p := "Predictions:\n"
 	id := d.UUID
 
-	r := new(regression.Regression)
-	r.SetObserved("Production Rate")
-	r.SetVar(0, "Index")
-	r.SetVar(1, "Backlog")
+	for i := 0; i < 5; i++ {
+		r := new(regression.Regression)
+		r.SetObserved("Production Rate")
+		r.SetVar(0, "Index")
+		r.SetVar(1, "Backlog")
 
-	for i, entry := range data {
-		r.Train(regression.DataPoint(float64(entry.Rate), []float64{float64((c + i) % historic), float64(entry.Backlog)}))
-	}
+		for j, entry := range data {
+			r.Train(regression.DataPoint(float64(entry.Rate), []float64{float64((c + j) % historic), float64(entry.Backlog)}))
+		}
 
-	err := r.Run()
+		err := r.Run()
 
-	if err != nil {
-		log.Print(err)
-		return
+		if err != nil {
+			log.Print(err)
+			return
+		}
+
+		for j := 0; j < historic; j++ {
+			pred, err := r.Predict([]float64{float64(historic + j), rand.Float64()})
+
+			if err != nil {
+				log.Print(err)
+				return
+			}
+
+			p = fmt.Sprintf("%s\n%#v", p, pred)
+		}
 	}
 
 	type Prediction struct {
 		Prediction string `json:"prediction"`
 		UUID       string `json:"uuid"`
-		Timestamp  string `json:"timestamp"`
 	}
 
 	text, err := json.Marshal(Prediction{
-		Prediction: fmt.Sprintf("%#v", r.Formula),
+		Prediction: p,
 		UUID:       id,
-		Timestamp:  strconv.FormatInt(time.Now().UnixNano(), 10),
 	})
 
 	if err != nil {
@@ -90,14 +101,11 @@ func update(d PackCtrlData) {
 		return
 	}
 
-	_, err = (&http.Client{
-		Timeout: 5 * time.Second,
-	}).Do(req)
+	_, err = (&http.Client{}).Do(req)
 
 	if err != nil {
 		log.Print(err)
 		return
-
 	}
 }
 
@@ -130,7 +138,7 @@ func main() {
 			return
 		}
 
-		log.Printf("recv,input,%s,%s,%s", d.UUID, d.Timestamp, timestamp)
+		log.Printf("recv,input,%s,%s", d.UUID, timestamp)
 
 		go update(d)
 

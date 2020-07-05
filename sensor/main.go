@@ -23,42 +23,45 @@ const lower int = 50
 func main() {
 	// update the world every 100 milliseconds
 	ticker := time.NewTicker(time.Duration(interval) * time.Millisecond)
-	for {
-		select {
-		case <-ticker.C:
+	for range ticker.C {
+		go func() {
 			temp := rand.Intn(upper-lower) + lower
 			// send random temperature
 
 			id, err := uuid.NewRandom()
 			if err != nil {
 				log.Print(err)
-				continue
+				return
 			}
 
 			type Reading struct {
-				Temp      int    `json:"temp"`
-				UUID      string `json:"uuid"`
-				Timestamp string `json:"timestamp"`
+				Temp int    `json:"temp"`
+				UUID string `json:"uuid"`
 			}
 
 			data, err := json.Marshal(Reading{
-				Temp:      temp,
-				UUID:      id.String(),
-				Timestamp: strconv.FormatInt(time.Now().UnixNano(), 10),
+				Temp: temp,
+				UUID: id.String(),
 			})
 
-			if err == nil {
-				log.Printf("send,adapt,%s,%s", id.String(),strconv.FormatInt(time.Now().UnixNano(), 10))
+			if err != nil {
+				return
+			}
+
+			log.Printf("send,adapt,%s,%s", id.String(), strconv.FormatInt(time.Now().UnixNano(), 10))
+
+			go func() {
 				req, err := http.NewRequest("POST", adaptEndpoint, bytes.NewReader(data))
 
-				if err == nil {
-					_, err := (&http.Client{}).Do(req)
-
-					if err != nil {
-						log.Print(err)
-					}
+				if err != nil {
+					return
 				}
-			}
-		}
+				_, err = (&http.Client{}).Do(req)
+
+				if err != nil {
+					log.Print(err)
+				}
+			}()
+		}()
 	}
 }

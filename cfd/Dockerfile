@@ -13,8 +13,8 @@ FROM scratch
 
 WORKDIR /
 
-COPY --from=build /go/bin/cfd bin
+COPY --from=build /go/bin/cfd cfd
 
 EXPOSE 8080
 
-ENTRYPOINT ["./bin"]
+ENTRYPOINT ["./cfd"]

@@ -12,15 +12,14 @@ import (
 	"time"
 )
 
-const interval int = 10000
+const buffer int = 10
 
 var generateDashboardEndpoint string = fmt.Sprintf("http://%s:%s/input", os.Getenv("GENERATEDASHBOARD_IP"), os.Getenv("GENERATEDASHBOARD_PORT"))
 
 type PackCtrlData struct {
-	Rate      int    `json:"rate"`
-	Backlog   int    `json:"backlog"`
-	UUID      string `json:"uuid"`
-	Timestamp string `json:"timestamp"`
+	Rate    int    `json:"rate"`
+	Backlog int    `json:"backlog"`
+	UUID    string `json:"uuid"`
 }
 
 func update(incoming <-chan PackCtrlData) {
@@ -33,43 +32,39 @@ func update(incoming <-chan PackCtrlData) {
 
 	var id string
 
-	var timestamp string
+	for data := range incoming {
+		avgbacklog = ((avgbacklog * float64(amount)) + float64(data.Backlog)) / (float64(amount) + 1)
+		avgpackagingspeed = ((avgpackagingspeed * float64(amount)) + float64(data.Rate)) / (float64(amount) + 1)
+		amount++
+		id = data.UUID
 
-	// update the world every interval seconds
-	ticker := time.NewTicker(time.Duration(interval) * time.Millisecond)
-	for {
-		select {
-		case data := <-incoming:
-			avgbacklog = ((avgbacklog * float64(amount)) + float64(data.Backlog)) / (float64(amount) + 1)
-			avgpackagingspeed = ((avgpackagingspeed * float64(amount)) + float64(data.Rate)) / (float64(amount) + 1)
-			amount++
-			id = data.UUID
-			timestamp = strconv.FormatInt(time.Now().UnixNano(), 10)
-
-		case <-ticker.C:
-			// send data
-			data, err := json.Marshal(PackCtrlData{
-				Rate:      int(math.Round(avgpackagingspeed)),
-				Backlog:   int(math.Round(avgbacklog)),
-				UUID:      id,
-				Timestamp: timestamp,
-			})
-
-			if err != nil {
-				return
-			}
-
-			log.Printf("send,aggregate,%s,%s", id, timestamp)
-			req, err := http.NewRequest("POST", generateDashboardEndpoint, bytes.NewReader(data))
-
-			if err == nil {
-				_, err := (&http.Client{}).Do(req)
+		// only send out aggregated values every 10 recv's
+		if amount >= buffer {
+			amount, avgbacklog, avgpackagingspeed = 0, 0.0, 0.0
+			go func() { // send data
+				data, err := json.Marshal(PackCtrlData{
+					Rate:    int(math.Round(avgpackagingspeed)),
+					Backlog: int(math.Round(avgbacklog)),
+					UUID:    id,
+				})
 
 				if err != nil {
-					log.Print(err)
+					return
 				}
-			}
+
+				log.Printf("send,aggregate,%s,%s", id, strconv.FormatInt(time.Now().UnixNano(), 10))
+				req, err := http.NewRequest("POST", generateDashboardEndpoint, bytes.NewReader(data))
+
+				if err == nil {
+					_, err := (&http.Client{}).Do(req)
+
+					if err != nil {
+						log.Print(err)
+					}
+				}
+			}()
 		}
+
 	}
 }
 
@@ -88,7 +83,7 @@ func main() {
 			return
 		}
 
-		log.Printf("recv,data,%s,%s,%s", data.UUID, data.Timestamp, timestamp)
+		log.Printf("recv,data,%s,%s", data.UUID, timestamp)
 
 		incoming <- data
 	})

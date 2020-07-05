@@ -65,8 +65,8 @@ func generateImage() string {
 func main() {
 	ticker := time.NewTicker(time.Duration(interval) * time.Millisecond)
 
-	for {
-		<-ticker.C
+	for range ticker.C {
+
 		img := generateImage()
 
 		id, err := uuid.NewRandom()
@@ -76,15 +76,13 @@ func main() {
 		}
 
 		type Request struct {
-			Img       string `json:"img"`
-			UUID      string `json:"uuid"`
-			Timestamp string `json:"timestamp"`
+			Img  string `json:"img"`
+			UUID string `json:"uuid"`
 		}
 
 		data, err := json.Marshal(Request{
-			Img:       img,
-			UUID:      id.String(),
-			Timestamp: strconv.FormatInt(time.Now().UnixNano(), 10),
+			Img:  img,
+			UUID: id.String(),
 		})
 
 		if err != nil {
@@ -95,13 +93,18 @@ func main() {
 
 		req, err := http.NewRequest("POST", cfdEndpoint, bytes.NewReader(data))
 
-		if err == nil {
-			_, err := (&http.Client{}).Do(req)
+		if err != nil {
+			continue
+		}
+
+		go func() {
+			_, err = (&http.Client{}).Do(req)
 
 			if err != nil {
 				log.Print(err)
+
 			}
-		}
+		}()
 
 	}
 

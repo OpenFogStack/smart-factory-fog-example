@@ -12,8 +12,8 @@ FROM scratch
 
 WORKDIR /
 
-COPY --from=build /go/bin/adapt bin
+COPY --from=build /go/bin/adapt adapt
 
 EXPOSE 8080
 
-ENTRYPOINT ["./bin"]
+ENTRYPOINT ["./adapt"]

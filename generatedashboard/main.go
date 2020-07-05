@@ -21,13 +21,12 @@ import (
 var dashboardEndpoint string = fmt.Sprintf("http://%s:%s/input", os.Getenv("CENTRALDASHBOARD_IP"), os.Getenv("CENTRALDASHBOARD_PORT"))
 
 // amount of historic data to save
-const historic int = 1000
+const historic int = 5000
 
 type PackCtrlData struct {
-	Rate      int    `json:"rate"`
-	Backlog   int    `json:"backlog"`
-	UUID      string `json:"uuid"`
-	Timestamp string `json:"timestamp"`
+	Rate    int    `json:"rate"`
+	Backlog int    `json:"backlog"`
+	UUID    string `json:"uuid"`
 }
 
 type Store struct {
@@ -61,7 +60,7 @@ func encode(data []int) (string, error) {
 
 	p.Add(hist)
 
-	w, err := p.WriterTo(10*vg.Centimeter, 10*vg.Centimeter, "png")
+	w, err := p.WriterTo(10*vg.Centimeter, 5*vg.Centimeter, "png")
 
 	if err != nil {
 		return "", err
@@ -91,10 +90,9 @@ func update(d PackCtrlData) {
 	s.Unlock()
 
 	type Response struct {
-		Backlog   string `json:"backlog"`
-		Rate      string `json:"backlog"`
-		UUID      string `json:"uuid"`
-		Timestamp string `json:"timestamp"`
+		Backlog string `json:"backlog"`
+		Rate    string `json:"backlog"`
+		UUID    string `json:"uuid"`
 	}
 
 	backlogData := make([]int, historic)
@@ -121,10 +119,9 @@ func update(d PackCtrlData) {
 	}
 
 	res := Response{
-		Backlog:   encBacklog,
-		Rate:      encRate,
-		UUID:      d.UUID,
-		Timestamp: strconv.FormatInt(time.Now().UnixNano(), 10),
+		Backlog: encBacklog,
+		Rate:    encRate,
+		UUID:    d.UUID,
 	}
 
 	text, err := json.Marshal(res)
@@ -143,9 +140,7 @@ func update(d PackCtrlData) {
 
 	log.Printf("send,generate_dashboard,%s,%s", d.UUID, strconv.FormatInt(time.Now().UnixNano(), 10))
 
-	_, err = (&http.Client{
-		Timeout: 5 * time.Second,
-	}).Do(req)
+	_, err = (&http.Client{}).Do(req)
 
 	if err != nil {
 		log.Print(err)
@@ -163,14 +158,11 @@ func main() {
 	}
 
 	// fill Store with random data first
-	t := time.Now().UnixNano()
-
 	for i := range s.Data {
 		s.Data[i] = PackCtrlData{
-			Rate:      rand.Intn(1000),
-			Backlog:   rand.Intn(1000),
-			UUID:      "invalid",
-			Timestamp: fmt.Sprintf("%d", rand.Int63n(t)),
+			Rate:    rand.Intn(1000),
+			Backlog: rand.Intn(1000),
+			UUID:    "invalid",
 		}
 	}
 
@@ -184,7 +176,7 @@ func main() {
 			return
 		}
 
-		log.Printf("recv,input,%s,%s,%s", d.UUID, d.Timestamp, timestamp)
+		log.Printf("recv,input,%s,%s", d.UUID, timestamp)
 
 		go update(d)
 

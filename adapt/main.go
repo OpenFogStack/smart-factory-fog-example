@@ -21,16 +21,50 @@ const maxpackagingspeed = 1000
 var packcntrlEndpoint string = fmt.Sprintf("http://%s:%s/rate", os.Getenv("PKGCNTRL_IP"), os.Getenv("PKGCNTRL_PORT"))
 
 type ProdCntrlData struct {
-	ProdRate  int    `json:"prod_rate"`
-	UUID      string `json:"uuid"`
-	Timestamp string `json:"timestamp"`
+	ProdRate int    `json:"prod_rate"`
+	UUID     string `json:"uuid"`
 }
 
 type SensorData struct {
-	Temp      int    `json:"temp"`
-	Time      string `json:"time"`
-	UUID      string `json:"uuid"`
-	Timestamp string `json:"timestamp"`
+	Temp int    `json:"temp"`
+	Time string `json:"time"`
+	UUID string `json:"uuid"`
+}
+
+func update(packagingspeed int, backlog int, id string) {
+
+	type PackCtrlData struct {
+		Rate    int    `json:"rate"`
+		Backlog int    `json:"backlog"`
+		UUID    string `json:"uuid"`
+	}
+
+	timestamp := strconv.FormatInt(time.Now().UnixNano(), 10)
+
+	// send data
+	data, err := json.Marshal(PackCtrlData{
+		Rate:    packagingspeed,
+		Backlog: backlog,
+		UUID:    id,
+	})
+
+	if err != nil {
+		return
+	}
+
+	log.Printf("send,adapt,%s,%s", id, timestamp)
+
+	req, err := http.NewRequest("POST", packcntrlEndpoint, bytes.NewReader(data))
+
+	if err != nil {
+		return
+	}
+
+	_, err = (&http.Client{}).Do(req)
+
+	if err != nil {
+		log.Print(err)
+	}
 }
 
 func packagingRate(prodrate <-chan ProdCntrlData, temp <-chan SensorData) {
@@ -46,26 +80,11 @@ func packagingRate(prodrate <-chan ProdCntrlData, temp <-chan SensorData) {
 	// production speed of the production machine
 	var productionspeed int
 
-	var id string
-
-	var timestamp string
-
-	// update the world every 100 milliseconds
-	ticker := time.NewTicker(time.Duration(interval) * time.Millisecond)
-
 	for {
 		select {
 		case pr := <-prodrate:
 			productionspeed = pr.ProdRate
-			id = pr.UUID
-			timestamp = strconv.FormatInt(time.Now().UnixNano(), 10)
 
-		case t := <-temp:
-			temperatureblock = t.Temp > upperthreshold
-			id = t.UUID
-			timestamp = strconv.FormatInt(time.Now().UnixNano(), 10)
-
-		case <-ticker.C:
 			if temperatureblock {
 				packagingspeed = 0
 				backlog = backlog + (productionspeed * (interval / 1000))
@@ -80,36 +99,26 @@ func packagingRate(prodrate <-chan ProdCntrlData, temp <-chan SensorData) {
 				backlog = 0
 			}
 
-			type PackCtrlData struct {
-				Rate      int    `json:"rate"`
-				Backlog   int    `json:"backlog"`
-				UUID      string `json:"uuid"`
-				Timestamp string `json:"timestamp"`
+			go update(packagingspeed, backlog, pr.UUID)
+
+		case t := <-temp:
+			temperatureblock = t.Temp > upperthreshold
+
+			if temperatureblock {
+				packagingspeed = 0
+				backlog = backlog + (productionspeed * (interval / 1000))
+			} else if backlog > 0 {
+				packagingspeed = maxpackagingspeed
+			} else {
+				packagingspeed = productionspeed
 			}
 
-			// send data
-			data, err := json.Marshal(PackCtrlData{
-				Rate:      packagingspeed,
-				Backlog:   backlog,
-				UUID:      id,
-				Timestamp: timestamp,
-			})
-
-			if err != nil {
-				return
+			backlog = backlog - (packagingspeed * (interval / 1000))
+			if backlog < 0 {
+				backlog = 0
 			}
 
-			log.Printf("send,adapt,%s,%s", id, timestamp)
-
-			req, err := http.NewRequest("POST", packcntrlEndpoint, bytes.NewReader(data))
-
-			if err == nil {
-				_, err := (&http.Client{}).Do(req)
-
-				if err != nil {
-					log.Print(err)
-				}
-			}
+			go update(packagingspeed, backlog, t.UUID)
 
 		}
 	}
@@ -135,7 +144,7 @@ func main() {
 			return
 		}
 
-		log.Printf("recv,prodcntrl,%s,%s,%s", data.UUID, data.Timestamp, timestamp)
+		log.Printf("recv,prodcntrl,%s,%s", data.UUID, timestamp)
 
 		proddata <- data
 	})
@@ -150,7 +159,7 @@ func main() {
 			return
 		}
 
-		log.Printf("recv,sensor,%s,%s,%s", data.UUID, data.Timestamp, timestamp)
+		log.Printf("recv,sensor,%s,%s", data.UUID, timestamp)
 
 		sensordata <- data
 	})

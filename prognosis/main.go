@@ -15,7 +15,6 @@ func main() {
 	type Prediction struct {
 		Prediction string `json:"prediction"`
 		UUID       string `json:"uuid"`
-		Timestamp  string `json:"timestamp"`
 	}
 
 	http.HandleFunc("/input", func(w http.ResponseWriter, r *http.Request) {
@@ -30,7 +29,7 @@ func main() {
 			return
 		}
 
-		log.Printf("recv,input,%s,%s,%s", data.UUID, data.Timestamp, timestamp)
+		log.Printf("recv,input,%s,%s", data.UUID, timestamp)
 
 		prediction = data.Prediction
 	})

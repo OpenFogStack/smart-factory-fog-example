@@ -12,6 +12,6 @@ FROM scratch
 
 WORKDIR /
 
-COPY --from=build /go/bin/sensor bin
+COPY --from=build /go/bin/sensor sensor
 
-ENTRYPOINT ["./bin"]
+ENTRYPOINT ["./sensor"]

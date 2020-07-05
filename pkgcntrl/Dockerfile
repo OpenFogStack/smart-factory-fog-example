@@ -12,8 +12,8 @@ FROM scratch
 
 WORKDIR /
 
-COPY --from=build /go/bin/pkgcntrl bin
+COPY --from=build /go/bin/pkgcntrl pkgcntrl
 
 EXPOSE 8080
 
-ENTRYPOINT ["./bin"]
+ENTRYPOINT ["./pkgcntrl"]

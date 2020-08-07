@@ -62,7 +62,7 @@ func generateImage() string {
 	return encoded
 }
 
-func main() {
+func generateImages() {
 	ticker := time.NewTicker(time.Duration(interval) * time.Millisecond)
 
 	for range ticker.C {
@@ -107,5 +107,25 @@ func main() {
 		}()
 
 	}
+}
 
+func main() {
+	http.HandleFunc("/state/notifications", func(w http.ResponseWriter, r *http.Request) {
+		stateNameA, ok := r.URL.Query()["state_name"]
+
+		if !ok || len(stateNameA[0]) < 1 {
+			log.Println("Url Param 'state_name' is missing")
+			return
+		}
+
+		stateName := stateNameA[0]
+
+		log.Printf("Received state notification request, beginning " + string(stateName))
+		w.Header().Set("Server", "camera")
+		w.WriteHeader(200)
+	})
+
+	go generateImages()
+
+	log.Fatal(http.ListenAndServe(":"+os.Getenv("CAMERA_PORT"), nil))
 }

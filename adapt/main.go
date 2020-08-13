@@ -13,10 +13,8 @@ import (
 
 const upperthreshold int = 130
 
-// update interval in milliseconds
-const interval int = 100
-
-const maxpackagingspeed = 1000
+// maximum number of items to be packaged per second
+const maxpackagingspeed = 15
 
 var packcntrlEndpoint string = fmt.Sprintf("http://%s:%s/rate", os.Getenv("PKGCNTRL_IP"), os.Getenv("PKGCNTRL_PORT"))
 
@@ -87,14 +85,14 @@ func packagingRate(prodrate <-chan ProdCntrlData, temp <-chan SensorData) {
 
 			if temperatureblock {
 				packagingspeed = 0
-				backlog = backlog + (productionspeed * (interval / 1000))
+				backlog = backlog + productionspeed
 			} else if backlog > 0 {
 				packagingspeed = maxpackagingspeed
 			} else {
 				packagingspeed = productionspeed
 			}
 
-			backlog = backlog - (packagingspeed * (interval / 1000))
+			backlog = backlog - packagingspeed
 			if backlog < 0 {
 				backlog = 0
 			}
@@ -103,23 +101,6 @@ func packagingRate(prodrate <-chan ProdCntrlData, temp <-chan SensorData) {
 
 		case t := <-temp:
 			temperatureblock = t.Temp > upperthreshold
-
-			if temperatureblock {
-				packagingspeed = 0
-				backlog = backlog + (productionspeed * (interval / 1000))
-			} else if backlog > 0 {
-				packagingspeed = maxpackagingspeed
-			} else {
-				packagingspeed = productionspeed
-			}
-
-			backlog = backlog - (packagingspeed * (interval / 1000))
-			if backlog < 0 {
-				backlog = 0
-			}
-
-			go update(packagingspeed, backlog, t.UUID)
-
 		}
 	}
 }

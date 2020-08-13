@@ -49,33 +49,31 @@ func update(d PackCtrlData) {
 	p := "Predictions:\n"
 	id := d.UUID
 
-	for i := 0; i < 5; i++ {
-		r := new(regression.Regression)
-		r.SetObserved("Production Rate")
-		r.SetVar(0, "Index")
-		r.SetVar(1, "Backlog")
+	r := new(regression.Regression)
+	r.SetObserved("Production Rate")
+	r.SetVar(0, "Index")
+	r.SetVar(1, "Backlog")
 
-		for j, entry := range data {
-			r.Train(regression.DataPoint(float64(entry.Rate), []float64{float64((c + j) % historic), float64(entry.Backlog)}))
-		}
+	for j, entry := range data {
+		r.Train(regression.DataPoint(float64(entry.Rate), []float64{float64((c + j) % historic), float64(entry.Backlog)}))
+	}
 
-		err := r.Run()
+	err := r.Run()
+
+	if err != nil {
+		log.Print(err)
+		return
+	}
+
+	for j := 0; j < historic; j++ {
+		pred, err := r.Predict([]float64{float64(historic + j), rand.Float64()})
 
 		if err != nil {
 			log.Print(err)
 			return
 		}
 
-		for j := 0; j < historic; j++ {
-			pred, err := r.Predict([]float64{float64(historic + j), rand.Float64()})
-
-			if err != nil {
-				log.Print(err)
-				return
-			}
-
-			p = fmt.Sprintf("%s\n%#v", p, pred)
-		}
+		p = fmt.Sprintf("%s\n%#v", p, pred)
 	}
 
 	type Prediction struct {

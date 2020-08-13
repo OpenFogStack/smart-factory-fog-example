@@ -15,15 +15,12 @@ import (
 
 var adaptEndpoint string = fmt.Sprintf("http://%s:%s/prodcntrl", os.Getenv("ADAPT_IP"), os.Getenv("ADAPT_PORT"))
 
-// standard production rate
-const rate = 100
-
-// update interval in milliseconds
-const interval int = 100
+// standard production rate per second
+const rate = 10
 
 func update(queue <-chan struct{}) {
-	// update the world every 100 milliseconds
-	ticker := time.NewTicker(time.Duration(interval) * time.Millisecond)
+	// update the world every 1 second
+	ticker := time.NewTicker(time.Duration(1000) * time.Millisecond)
 
 	discarded := 0
 	for {
@@ -32,9 +29,8 @@ func update(queue <-chan struct{}) {
 			discarded++
 		case <-ticker.C:
 			go func() {
-				// send rate - discarded
-
-				curr := (rate * (interval / 1000)) - discarded
+				curr := rate - discarded
+				discarded = 0
 
 				id, err := uuid.NewRandom()
 				if err != nil {
@@ -55,6 +51,8 @@ func update(queue <-chan struct{}) {
 				if err != nil {
 					return
 				}
+
+				log.Printf("Production in the last second was %d", curr)
 				log.Printf("send,prodctrl,%s,%s", id.String(), strconv.FormatInt(time.Now().UnixNano(), 10))
 
 				req, err := http.NewRequest("POST", adaptEndpoint, bytes.NewReader(data))

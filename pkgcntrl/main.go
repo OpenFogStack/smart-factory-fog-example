@@ -45,6 +45,8 @@ func main() {
 
 		rate = data.Rate
 		backlog = data.Backlog
+
+		log.Printf("updated rate and backlog:%d,%d", rate, backlog)
 	})
 
 	go func() { log.Fatal(http.ListenAndServe(":"+os.Getenv("PKGCNTRL_PORT"), nil)) }()

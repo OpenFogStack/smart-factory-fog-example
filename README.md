@@ -22,3 +22,5 @@ Then use `make all -B` or `make [service name] -B` to build and push all service
 [If your system supports it](https://www.gnu.org/software/make/manual/html_node/Parallel.html), use `make all -B -j` to build and push all services in parallel.
 
 Alternatively, you can also build binaries directly by going into the directory of a service and running `go build .` (Go in version >= 1.13 is required).
+
+If you plan to run components individually, it is advised to first source the test_environment file: `source test_environment`

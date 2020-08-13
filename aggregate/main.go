@@ -40,13 +40,16 @@ func update(incoming <-chan PackCtrlData) {
 
 		// only send out aggregated values every 10 recv's
 		if amount >= buffer {
+			data, err := json.Marshal(PackCtrlData{
+				Rate:    int(math.Round(avgpackagingspeed)),
+				Backlog: int(math.Round(avgbacklog)),
+				UUID:    id,
+			})
+
+			log.Printf("aggregated rate and backlog:%.2f,%.2f", math.Round(avgpackagingspeed), math.Round(avgbacklog))
+
 			amount, avgbacklog, avgpackagingspeed = 0, 0.0, 0.0
 			go func() { // send data
-				data, err := json.Marshal(PackCtrlData{
-					Rate:    int(math.Round(avgpackagingspeed)),
-					Backlog: int(math.Round(avgbacklog)),
-					UUID:    id,
-				})
 
 				if err != nil {
 					return

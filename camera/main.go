@@ -22,8 +22,8 @@ import (
 
 var cfdEndpoint string = fmt.Sprintf("http://%s:%s/image", os.Getenv("CFD_IP"), os.Getenv("CFD_PORT"))
 
-// update interval in milliseconds
-const interval int = 100
+// production rate defined in cntrl
+const rate = 10
 
 const width int = 100
 const height int = 100
@@ -63,7 +63,7 @@ func generateImage() string {
 }
 
 func generateImages() {
-	ticker := time.NewTicker(time.Duration(interval) * time.Millisecond)
+	ticker := time.NewTicker(time.Duration(1.0 / rate * 1000.0) * time.Millisecond)
 
 	for range ticker.C {
 

@@ -16,7 +16,7 @@ import (
 
 var adaptEndpoint string = fmt.Sprintf("http://%s:%s/sensor", os.Getenv("ADAPT_IP"), os.Getenv("ADAPT_PORT"))
 
-const interval int = 10
+const interval int = 100
 const upper int = 150
 var lower int = 50
 

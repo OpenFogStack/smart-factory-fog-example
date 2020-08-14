@@ -126,6 +126,8 @@ func main() {
 	})
 
 	go generateImages()
+	
+	log.Printf("started")
 
 	log.Fatal(http.ListenAndServe(":"+os.Getenv("CAMERA_PORT"), nil))
 }

@@ -208,6 +208,8 @@ func main() {
 		w.Header().Set("Server", "Generate Dashboard")
   		w.WriteHeader(200)
 	})
+	
+	log.Printf("started")
 
 	log.Fatal(http.ListenAndServe(":"+os.Getenv("GENERATEDASHBOARD_PORT"), nil))
 }

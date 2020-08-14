@@ -141,6 +141,8 @@ func main() {
 		go update(d)
 
 	})
+	
+	log.Printf("started")
 
 	log.Fatal(http.ListenAndServe(":"+os.Getenv("PREDICT_PORT"), nil))
 }

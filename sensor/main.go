@@ -106,6 +106,8 @@ func main() {
 	})
 
 	go generateTemps()
+	
+	log.Printf("started")
 
 	log.Fatal(http.ListenAndServe(":"+os.Getenv("SENSOR_PORT"), nil))
 }

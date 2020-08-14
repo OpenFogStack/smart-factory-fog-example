@@ -147,5 +147,7 @@ func main() {
 
 	go packagingRate(proddata, sensordata)
 
+	log.Printf("started")
+
 	log.Fatal(http.ListenAndServe(":"+os.Getenv("ADAPT_PORT"), nil))
 }

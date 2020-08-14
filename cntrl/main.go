@@ -94,6 +94,8 @@ func main() {
 	})
 
 	go update(discardqueue)
+	
+	log.Printf("started")
 
 	log.Fatal(http.ListenAndServe(":"+os.Getenv("CNTRL_PORT"), nil))
 

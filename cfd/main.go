@@ -120,6 +120,8 @@ func main() {
 
 		go processImage(data)
 	})
+	
+	log.Printf("started")
 
 	log.Fatal(http.ListenAndServe(":"+os.Getenv("CFD_PORT"), nil))
 }

@@ -93,5 +93,7 @@ func main() {
 
 	go update(incoming)
 
+	log.Printf("started")
+
 	log.Fatal(http.ListenAndServe(":"+os.Getenv("AGGREGATE_PORT"), nil))
 }

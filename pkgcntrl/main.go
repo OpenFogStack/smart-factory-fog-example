@@ -50,6 +50,8 @@ func main() {
 	})
 
 	go func() { log.Fatal(http.ListenAndServe(":"+os.Getenv("PKGCNTRL_PORT"), nil)) }()
+	
+	log.Printf("started")
 
 	ticker := time.NewTicker(time.Duration(interval) * time.Millisecond)
 

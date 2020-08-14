@@ -82,6 +82,8 @@ func main() {
 	http.HandleFunc("/index.html", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "index.html")
 	})
+	
+	log.Printf("started")
 
 	log.Fatal(http.ListenAndServe(":"+os.Getenv("CENTRALDASHBOARD_PORT"), nil))
 }

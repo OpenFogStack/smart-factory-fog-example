@@ -19,3 +19,4 @@ export CFD_PORT=8008
 export ADAPT_IP=localhost
 export ADAPT_PORT=8009
 export PREDICT_IP=localhost
+export PREDICT_PORT=8010

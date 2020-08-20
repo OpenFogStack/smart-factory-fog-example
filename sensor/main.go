@@ -67,6 +67,8 @@ func generateTemps() {
 }
 
 func main() {
+	rand.Seed(100)
+
 	http.HandleFunc("/config", func(w http.ResponseWriter, r *http.Request) {
 
 		minTempA, ok := r.URL.Query()["min_temp"]
@@ -101,6 +103,7 @@ func main() {
 		stateName := stateNameA[0]
 
 		log.Printf("Received state notification request, beginning " + string(stateName))
+		rand.Seed(100)
 		w.Header().Set("Server", "temperature-sensor")
 		w.WriteHeader(200)
 	})

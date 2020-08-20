@@ -110,6 +110,8 @@ func generateImages() {
 }
 
 func main() {
+	rand.Seed(100)
+
 	http.HandleFunc("/state/notifications", func(w http.ResponseWriter, r *http.Request) {
 		stateNameA, ok := r.URL.Query()["state_name"]
 
@@ -121,6 +123,7 @@ func main() {
 		stateName := stateNameA[0]
 
 		log.Printf("Received state notification request, beginning " + string(stateName))
+		rand.Seed(100)
 		w.Header().Set("Server", "camera")
 		w.WriteHeader(200)
 	})

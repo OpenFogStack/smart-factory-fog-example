@@ -17,7 +17,8 @@ Four such paths exist.
 
 - temperature-sensor: send,adapt,id                 contains a single temperature value, emitted at fixed interval (100ms)
 - adapt-packaging: recv,sensor,id
-OR
+-> ids are not used for anything else at this point, as new messages are send out when new production-controller data arrives
+
 - production-controller: send,prodctrl,id           contains the current production rate, emitted at fixed interval (100ms)
 - adapt-packaging:  recv,prodcntrl,id
 THE BELOW ID CAN BE A TEMPERATURE-SENSOR ID OR AN PRODUCTION-CONTROLLER ID       
